@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shooting Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #111;
+        }
+        #instructions, #gameOver {
+            display: none;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #instructions h1, #gameOver h1 {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="instructions">
+         <h1><b>!!HyperBlaster: Shoot, Dodge, Survive!!<b></h1>
+        <h1><u>Game Instructions</u></h1>
+        <p>Use the left and right arrow keys to move your spaceship.</p>
+        <p>Press the space bar to shoot bullets.</p>
+        <p>Avoid the enemies that come from the top of the screen.</p>
+        <p>Survive as long as you can to achieve the highest score!</p>
+        <button onclick="startGame()">Start Game</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="gameOver">
+        <h1>Game Over!</h1>
+        <p>Your Score: <span id="finalScore"></span></p>
+        <p>Highest Score: <span id="highScore"></span></p>
+        <button onclick="restartGame()">Play Again</button>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
+
