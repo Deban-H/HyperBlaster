@@ -1,0 +1,249 @@
+
+
+       <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Battle Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #1a1a1a;
+            border: 2px solid #fff;
+        }
+        .overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            width: 50%;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #555;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #777;
+        }
+        img {
+            width: 100px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Character Battle Game</h1>
+    <div id="instructions" class="overlay">
+        <h2>Game Instructions</h2>
+        <p>Welcome to the Character Battle Game!</p>
+        <p>Player 1: Choose your character between "Doraemon" and "Ninja Hattori".</p>
+        <p>Player 2 will automatically be assigned the other character.</p>
+        <p>Controls:</p>
+        <ul>
+            <li><strong>Player 1</strong>: Move Left: <strong>A</strong>, Move Right: <strong>D</strong>, Attack: <strong>S</strong></li>
+            <li><strong>Player 2</strong>: Move Left: <strong>Left Arrow</strong>, Move Right: <strong>Right Arrow</strong>, Attack: <strong>Down Arrow</strong></li>
+        </ul>
+        <button onclick="goToCharacterSelection()">Start Game</button>
+    </div>
+
+    <div id="characterSelection" class="overlay" style="display:none;">
+        <h2>Choose Your Character</h2>
+        <button onclick="selectCharacter('doraemon')"><img src="doraemon.png" alt="Doraemon"></button>
+        <button onclick="selectCharacter('ninja_hattori')"><img src="ninja_hattori.png" alt="Ninja Hattori"></button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = 1000; // Increased width
+        canvas.height = 500; // Increased height
+
+        const playerWidth = 50;
+        const playerHeight = 100;
+        const playerSpeed = 5;
+        const attackRange = 10;
+        const gameDuration = 2 * 60 * 1000; // 2 minutes in milliseconds
+
+        let player1 = {
+            x: 50,
+            y: canvas.height - playerHeight,
+            width: playerWidth,
+            height: playerHeight,
+            character: '',
+            image: null,
+            color: 'red',
+            moveLeft: false,
+            moveRight: false,
+            attack: false,
+            health: 100,
+            score: 0
+        };
+
+        let player2 = {
+            x: canvas.width - playerWidth - 50,
+            y: canvas.height - playerHeight,
+            width: playerWidth,
+            height: playerHeight,
+            character: '',
+            image: null,
+            color: 'blue',
+            moveLeft: false,
+            moveRight: false,
+            attack: false,
+            health: 100,
+            score: 0
+        };
+
+        const characterImages = {
+            'doraemon': new Image(),
+            'ninja_hattori': new Image()
+        };
+        characterImages['doraemon'].src = 'doraemon.jpg'; // Make sure these paths are correct
+        characterImages['ninja_hattori'].src = 'hatori.jpg'; // Make sure these paths are correct
+
+        let gameStartTime;
+        let gameRunning = false;
+
+        function goToCharacterSelection() {
+            document.getElementById('instructions').style.display = 'none';
+            document.getElementById('characterSelection').style.display = 'block';
+        }
+
+        function selectCharacter(character) {
+            player1.character = character;
+            player1.image = characterImages[character];
+            player2.character = character === 'doraemon' ? 'ninja_hattori' : 'doraemon';
+            player2.image = characterImages[player2.character];
+            document.getElementById('characterSelection').style.display = 'none';
+            startGame();
+        }
+
+        function drawPlayer(player) {
+            if (player.image) {
+                ctx.drawImage(player.image, player.x, player.y, player.width, player.height);
+            } else {
+                ctx.fillStyle = player.color;
+                ctx.fillRect(player.x, player.y, player.width, player.height);
+            }
+        }
+
+        function drawHealthBar(player, x, y) {
+            ctx.fillStyle = 'gray';
+            ctx.fillRect(x, y, 100, 10);
+            ctx.fillStyle = player.color;
+            ctx.fillRect(x, y, player.health, 10);
+        }
+
+        function drawTimer() {
+            const elapsedTime = Date.now() - gameStartTime;
+            const timeLeft = Math.max(0, (gameDuration - elapsedTime) / 1000);
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Time Left: ${timeLeft.toFixed(1)}s`, canvas.width / 2 - 50, 50);
+        }
+
+        function handleMovement() {
+            if (player1.moveLeft) player1.x -= playerSpeed;
+            if (player1.moveRight) player1.x += playerSpeed;
+
+            if (player2.moveLeft) player2.x -= playerSpeed;
+            if (player2.moveRight) player2.x += playerSpeed;
+        }
+
+        function handleAttacks() {
+            if (player1.attack && Math.abs(player1.x + player1.width - player2.x) < attackRange) {
+                player2.health -= 10;
+                player1.score += 10;
+                player1.attack = false;
+            }
+
+            if (player2.attack && Math.abs(player2.x - (player1.x + player1.width)) < attackRange) {
+                player1.health -= 10;
+                player2.score += 10;
+                player2.attack = false;
+            }
+        }
+
+        function updateGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawPlayer(player1);
+            drawPlayer(player2);
+
+            drawHealthBar(player1, 20, 20);
+            drawHealthBar(player2, canvas.width - 120, 20);
+
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Player 1 Score: ${player1.score}`, 20, 50);
+            ctx.fillText(`Player 2 Score: ${player2.score}`, canvas.width - 180, 50);
+
+            drawTimer();
+
+            handleMovement();
+            handleAttacks();
+
+            if (player1.health <= 0 || player2.health <= 0 || Date.now() - gameStartTime >= gameDuration) {
+                ctx.font = '30px Arial';
+                ctx.fillText('Game Over!', canvas.width / 2 - 80, canvas.height / 2);
+                ctx.fillText(`Player 1 Score: ${player1.score}`, canvas.width / 2 - 120, canvas.height / 2 + 40);
+                ctx.fillText(`Player 2 Score: ${player2.score}`, canvas.width / 2 - 120, canvas.height / 2 + 80);
+                return;
+            }
+
+            requestAnimationFrame(updateGame);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'a': player1.moveLeft = true; break;
+                case 'd': player1.moveRight = true; break;
+                case 's': player1.attack = true; break;
+                case 'ArrowLeft': player2.moveLeft = true; break;
+                case 'ArrowRight': player2.moveRight = true; break;
+                case 'ArrowDown': player2.attack = true; break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch (e.key) {
+                case 'a': player1.moveLeft = false; break;
+                case 'd': player1.moveRight = false; break;
+                case 's': player1.attack = false; break;
+                case 'ArrowLeft': player2.moveLeft = false; break;
+                case 'ArrowRight': player2.moveRight = false; break;
+                case 'ArrowDown': player2.attack = false; break;
+            }
+        });
+
+        function startGame() {
+            gameStartTime = Date.now();
+            gameRunning = true;
+            updateGame();
+        }
+    </script>
+</body>
+</html>
+
